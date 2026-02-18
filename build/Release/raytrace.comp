@@ -2,15 +2,8 @@
 layout(local_size_x = 16, local_size_y = 16) in;
 layout(rgba8, binding = 0) uniform image2D outTexture;
 
-/* Sphere: vec4(pos.xyz, radius), vec4(color.rgb, 0) */
-layout(std430, binding = 1) readonly buffer SphereBuffer {
-    vec4 sphere_data[];
-};
-
-/* Light: vec4(pos.xyz, 0), vec4(color.rgb, intensity) */
-layout(std430, binding = 2) readonly buffer LightBuffer {
-    vec4 light_data[];
-};
+layout(std430, binding = 1) readonly buffer SphereBuffer { vec4 sphere_data[]; };
+layout(std430, binding = 2) readonly buffer LightBuffer  { vec4 light_data[];  };
 
 uniform int sphere_count;
 uniform int light_count;
@@ -21,73 +14,193 @@ uniform vec3 background;
 uniform float fov;
 uniform float aspect;
 
-const float MAX_DIST = 1e10;
 const float EPSILON = 0.001;
+const float PI = 3.14159265;
+
+uint seed;
+uint rng() { seed=(seed^61u)^(seed>>16u); seed*=0x27d4eb2du; seed=seed^(seed>>15u); return seed; }
+float rand01() { return float(rng()) / 4294967295.0; }
+
+/* PBR */
+float ggx_d(vec3 N, vec3 H, float a2) {
+    float NdH = max(dot(N,H),0.0);
+    float d = NdH*NdH*(a2-1.0)+1.0;
+    return a2/(PI*d*d+0.0001);
+}
+float schlick_g(float NdV, float k) { return NdV/(NdV*(1.0-k)+k); }
+vec3 fresnel(float cosT, vec3 F0) { return F0+(1.0-F0)*pow(clamp(1.0-cosT,0.0,1.0),5.0); }
+
+float hit_sphere(vec3 ro, vec3 rd, vec3 c, float r) {
+    vec3 oc=ro-c; float b=2.0*dot(oc,rd); float cc=dot(oc,oc)-r*r;
+    float d=b*b-4.0*cc; if(d<0.0) return -1.0;
+    float t=(-b-sqrt(d))*0.5; if(t<EPSILON) t=(-b+sqrt(d))*0.5;
+    return (t>EPSILON)?t:-1.0;
+}
+
+vec3 checker(vec3 pt, vec3 base) {
+    int cx=int(floor(pt.x)); int cz=int(floor(pt.z));
+    return (((cx+cz)&1)==0)?base*0.6:base*1.2;
+}
+
+vec3 sky(vec3 rd) {
+    float t=0.5*(rd.y+1.0);
+    vec3 col = mix(vec3(1.0,0.9,0.8), vec3(0.2,0.35,0.7), t);
+    // Sun disc
+    vec3 sun_dir = normalize(vec3(0.5, 0.4, -0.7));
+    float sun = max(dot(rd, sun_dir), 0.0);
+    col += vec3(1.0, 0.9, 0.7) * pow(sun, 256.0) * 2.0;
+    col += vec3(1.0, 0.7, 0.4) * pow(sun, 32.0) * 0.3;
+    return col;
+}
+
+bool shadowed(vec3 org, vec3 dir, float maxd) {
+    for(int j=0;j<sphere_count;j++){
+        float m=sphere_data[j*2+1].w;
+        if(m<0.0) continue; // skip glass
+        float t=hit_sphere(org,dir,sphere_data[j*2].xyz,sphere_data[j*2].w);
+        if(t>0.0&&t<maxd) return true;
+    }
+    return false;
+}
+
+vec3 shade_pbr(vec3 pt, vec3 N, vec3 V, vec3 albedo, float metallic) {
+    float roughness=max(1.0-metallic*0.8, 0.15);
+    float a2=roughness*roughness*roughness*roughness;
+    float k=(roughness+1.0)*(roughness+1.0)/8.0;
+    vec3 F0=mix(vec3(0.04),albedo,metallic);
+    vec3 color=albedo*0.03;
+    for(int i=0;i<light_count;i++){
+        vec3 lp=light_data[i*2].xyz; vec3 lc=light_data[i*2+1].xyz;
+        float li=light_data[i*2+1].w;
+        vec3 L=normalize(lp-pt); float dist=length(lp-pt);
+        if(shadowed(pt+N*EPSILON,L,dist)) continue;
+        vec3 H=normalize(V+L);
+        float NdL=max(dot(N,L),0.0); float NdV=max(dot(N,V),0.001);
+        float D=ggx_d(N,H,a2);
+        float G=schlick_g(NdV,k)*schlick_g(NdL,k);
+        vec3 F=fresnel(max(dot(H,V),0.0),F0);
+        vec3 spec=(D*G*F)/(4.0*NdV*NdL+0.001);
+        vec3 kD=(1.0-F)*(1.0-metallic);
+        float atten=li/(1.0+0.05*dist*dist);
+        color+=(kD*albedo/PI+spec)*lc*NdL*atten;
+    }
+    return color;
+}
+
+/* Find closest hit */
+void find_hit(vec3 ro, vec3 rd, out int id, out float t_out) {
+    id=-1; t_out=1e10;
+    for(int i=0;i<sphere_count;i++){
+        float t=hit_sphere(ro,rd,sphere_data[i*2].xyz,sphere_data[i*2].w);
+        if(t>0.0&&t<t_out){t_out=t;id=i;}
+    }
+}
+
+vec3 shade_point(int id, vec3 pt, vec3 N, vec3 rd) {
+    vec3 albedo=sphere_data[id*2+1].xyz;
+    float metal=sphere_data[id*2+1].w;
+    if(sphere_data[id*2].w>50.0) albedo=checker(pt,albedo);
+    return shade_pbr(pt,N,-rd,albedo,max(metal,0.0));
+}
 
 void main() {
-    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
-    ivec2 imageSize_val = imageSize(outTexture);
-    
-    if (pixelCoords.x >= imageSize_val.x || pixelCoords.y >= imageSize_val.y) {
-        return;
-    }
-    
-    vec2 uv = vec2(pixelCoords) / vec2(imageSize_val);
-    
-    float fov_rad = fov * 3.14159 / 180.0;
-    float h = tan(fov_rad / 2.0);
-    float w = h * aspect;
-    
-    vec3 right = normalize(cross(camera_dir, camera_up));
-    vec3 up = normalize(cross(right, camera_dir));
-    
-    vec3 ray_dir = normalize(camera_dir + 
-        right * (2.0 * uv.x - 1.0) * w +
-        up * (2.0 * (1.0 - uv.y) - 1.0) * h);
-    
-    vec3 ray_origin = camera_pos;
-    
-    float closest_t = MAX_DIST;
-    int closest_sphere = -1;
-    vec3 hit_point = vec3(0);
-    vec3 normal = vec3(0);
-    
-    for (int i = 0; i < sphere_count; i++) {
-        vec3 s_pos = sphere_data[i * 2].xyz;
-        float s_radius = sphere_data[i * 2].w;
-        
-        vec3 oc = ray_origin - s_pos;
-        float b = 2.0 * dot(oc, ray_dir);
-        float c = dot(oc, oc) - s_radius * s_radius;
-        float disc = b * b - 4.0 * c;
-        
-        if (disc >= 0.0) {
-            float t = (-b - sqrt(disc)) * 0.5;
-            if (t < EPSILON) t = (-b + sqrt(disc)) * 0.5;
-            
-            if (t > EPSILON && t < closest_t) {
-                closest_t = t;
-                closest_sphere = i;
-                hit_point = ray_origin + ray_dir * t;
-                normal = normalize(hit_point - s_pos);
+    ivec2 px=ivec2(gl_GlobalInvocationID.xy);
+    ivec2 sz=imageSize(outTexture);
+    if(px.x>=sz.x||px.y>=sz.y) return;
+
+    seed=px.x*73856093u^px.y*19349663u;
+
+    float fov_rad=fov*PI/180.0;
+    float h=tan(fov_rad*0.5); float w=h*aspect;
+    vec3 right=normalize(cross(camera_dir,camera_up));
+    vec3 up=normalize(cross(right,camera_dir));
+
+    vec3 accum=vec3(0);
+    const int SAMPLES=2;
+
+    for(int s=0;s<SAMPLES;s++){
+        vec2 jitter=vec2(rand01(),rand01())-0.5;
+        vec2 uv=(vec2(px)+jitter)/vec2(sz);
+        vec3 rd=normalize(camera_dir+right*(2.0*uv.x-1.0)*w+up*(2.0*uv.y-1.0)*h);
+        vec3 ro=camera_pos;
+
+        int id; float t;
+        find_hit(ro,rd,id,t);
+
+        vec3 color;
+        if(id<0){
+            color=sky(rd);
+        } else {
+            vec3 pt=ro+rd*t;
+            vec3 N=normalize(pt-sphere_data[id*2].xyz);
+            float metal=sphere_data[id*2+1].w;
+
+            if(metal<0.0) {
+                // Glass: refraction + reflection (Fresnel)
+                float ior=1.5;
+                float cosi=dot(-rd,N);
+                bool entering=cosi>0.0;
+                vec3 n2=entering?N:-N;
+                float eta=entering?(1.0/ior):ior;
+                if(!entering) cosi=-cosi;
+
+                // Schlick fresnel for glass
+                float r0=(1.0-ior)/(1.0+ior); r0=r0*r0;
+                float fres=r0+(1.0-r0)*pow(1.0-cosi,5.0);
+
+                // Refracted ray
+                vec3 refr_dir=refract(rd,n2,eta);
+                bool total_reflect=(length(refr_dir)<0.001);
+
+                // Reflected ray
+                vec3 refl_dir=reflect(rd,n2);
+                vec3 refl_org=pt+n2*EPSILON;
+                int rid; float rt;
+                find_hit(refl_org,refl_dir,rid,rt);
+                vec3 refl_col=(rid<0)?sky(refl_dir):
+                    shade_point(rid,refl_org+refl_dir*rt,
+                        normalize(refl_org+refl_dir*rt-sphere_data[rid*2].xyz),refl_dir);
+
+                if(total_reflect){
+                    color=refl_col;
+                } else {
+                    vec3 refr_org=pt-n2*EPSILON;
+                    int fid; float ft;
+                    find_hit(refr_org,refr_dir,fid,ft);
+                    vec3 refr_col=(fid<0)?sky(refr_dir):
+                        shade_point(fid,refr_org+refr_dir*ft,
+                            normalize(refr_org+refr_dir*ft-sphere_data[fid*2].xyz),refr_dir);
+
+                    // Tint refraction with glass color
+                    refr_col *= sphere_data[id*2+1].xyz;
+                    color=mix(refr_col,refl_col,fres);
+                }
+            } else {
+                color=shade_point(id,pt,N,rd);
+
+                // Reflection
+                float refl_str=mix(0.04,0.85,metal);
+                vec3 rdir=reflect(rd,N);
+                vec3 rorg=pt+N*EPSILON;
+                int rid; float rt;
+                find_hit(rorg,rdir,rid,rt);
+
+                vec3 rcol;
+                if(rid<0){
+                    rcol=sky(rdir);
+                } else {
+                    vec3 rpt=rorg+rdir*rt;
+                    vec3 rN=normalize(rpt-sphere_data[rid*2].xyz);
+                    rcol=shade_point(rid,rpt,rN,rdir);
+                }
+                color=mix(color,rcol,refl_str);
             }
         }
+        accum+=color;
     }
-    
-    vec3 color = background;
-    
-    if (closest_sphere >= 0) {
-        vec3 s_color = sphere_data[closest_sphere * 2 + 1].xyz;
-        color = vec3(0);
-        for (int i = 0; i < light_count; i++) {
-            vec3 l_pos = light_data[i * 2].xyz;
-            float l_intensity = light_data[i * 2 + 1].w;
-            
-            vec3 to_light = normalize(l_pos - hit_point);
-            float intensity = max(dot(normal, to_light), 0.0) * l_intensity;
-            color += s_color * intensity;
-        }
-    }
-    
-    imageStore(outTexture, pixelCoords, vec4(color, 1.0));
+
+    vec3 c=accum/float(SAMPLES);
+    c=c/(c+1.0);
+    c=pow(c,vec3(1.0/2.2));
+    imageStore(outTexture,px,vec4(c,1.0));
 }

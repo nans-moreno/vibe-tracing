@@ -17,26 +17,19 @@ find_package(OpenGL REQUIRED)
 
 # Add source files
 set(SOURCES
-    main.c
-    raytracer.c
-    scene.c
-    math.c
-    camera.c
-    ui.c
+    main_simple.c
     graphics.c
 )
 
 set(HEADERS
     raytracer.h
-    scene.h
-    math.h
-    camera.h
     ui.h
     graphics.h
+    config.h
 )
 
 # Create executable
-add_executable(vibe_tracing ${SOURCES} ${HEADERS})
+add_executable(vibe_tracing ${SOURCES})
 
 # Link libraries
 target_link_libraries(vibe_tracing PRIVATE

@@ -372,19 +372,8 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\main.c" />
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\raytracer.c" />
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\scene.c" />
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\math.c" />
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\camera.c" />
-    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\ui.c" />
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\main_simple.c" />
     <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\graphics.c" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\raytracer.h" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\scene.h" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\math.h" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\camera.h" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\ui.h" />
-    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\graphics.h" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

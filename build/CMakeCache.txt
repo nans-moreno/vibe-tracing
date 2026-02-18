@@ -59,7 +59,7 @@ CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO:STRING=/debug /INCREMENTAL
 CMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=C:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build/CMakeFiles/pkgRedirects
 
 //Install path prefix, prepended onto install directories.
-CMAKE_INSTALL_PREFIX:PATH=C:/Program Files (x86)/vibe_tracing
+CMAKE_INSTALL_PREFIX:PATH=C:/Program Files/vibe_tracing
 
 //Path to a program.
 CMAKE_LINKER:FILEPATH=C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools/VC/Tools/MSVC/14.40.33807/bin/Hostx64/x64/link.exe
@@ -173,6 +173,12 @@ CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=
 // Studio IDE projects all commands are done without /nologo.
 CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 
+//No help, variable specified on the command line.
+GLEW_DIR:UNINITIALIZED=C:\dependencies\glew-2.2.0
+
+//No help, variable specified on the command line.
+GLFW3_DIR:UNINITIALIZED=C:\dependencies\glfw-3.3.10.bin.WIN64
+
 //OpenGL library for win32
 OPENGL_gl_LIBRARY:STRING=opengl32
 
@@ -240,7 +246,7 @@ CMAKE_GENERATOR:INTERNAL=Visual Studio 17 2022
 //Generator instance identifier.
 CMAKE_GENERATOR_INSTANCE:INTERNAL=C:/Program Files (x86)/Microsoft Visual Studio/2022/BuildTools
 //Name of generator platform.
-CMAKE_GENERATOR_PLATFORM:INTERNAL=
+CMAKE_GENERATOR_PLATFORM:INTERNAL=x64
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
 //Source directory with the top level CMakeLists.txt file for this

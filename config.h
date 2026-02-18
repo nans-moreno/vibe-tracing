@@ -6,8 +6,9 @@
 #define SCREEN_HEIGHT 1080
 
 /* Ray tracing */
-#define MAX_RAY_DEPTH 2
+#define MAX_RAY_DEPTH 4
 #define RENDER_INTERVAL 0.5f
+#define AA_SAMPLES 4
 
 /* Camera */
 #define CAMERA_FOV 45.0f
