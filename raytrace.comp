@@ -1,0 +1,93 @@
+#version 430 core
+layout(local_size_x = 16, local_size_y = 16) in;
+layout(rgba8, binding = 0) uniform image2D outTexture;
+
+/* Sphere: vec4(pos.xyz, radius), vec4(color.rgb, 0) */
+layout(std430, binding = 1) readonly buffer SphereBuffer {
+    vec4 sphere_data[];
+};
+
+/* Light: vec4(pos.xyz, 0), vec4(color.rgb, intensity) */
+layout(std430, binding = 2) readonly buffer LightBuffer {
+    vec4 light_data[];
+};
+
+uniform int sphere_count;
+uniform int light_count;
+uniform vec3 camera_pos;
+uniform vec3 camera_dir;
+uniform vec3 camera_up;
+uniform vec3 background;
+uniform float fov;
+uniform float aspect;
+
+const float MAX_DIST = 1e10;
+const float EPSILON = 0.001;
+
+void main() {
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 imageSize_val = imageSize(outTexture);
+    
+    if (pixelCoords.x >= imageSize_val.x || pixelCoords.y >= imageSize_val.y) {
+        return;
+    }
+    
+    vec2 uv = vec2(pixelCoords) / vec2(imageSize_val);
+    
+    float fov_rad = fov * 3.14159 / 180.0;
+    float h = tan(fov_rad / 2.0);
+    float w = h * aspect;
+    
+    vec3 right = normalize(cross(camera_dir, camera_up));
+    vec3 up = normalize(cross(right, camera_dir));
+    
+    vec3 ray_dir = normalize(camera_dir + 
+        right * (2.0 * uv.x - 1.0) * w +
+        up * (2.0 * (1.0 - uv.y) - 1.0) * h);
+    
+    vec3 ray_origin = camera_pos;
+    
+    float closest_t = MAX_DIST;
+    int closest_sphere = -1;
+    vec3 hit_point = vec3(0);
+    vec3 normal = vec3(0);
+    
+    for (int i = 0; i < sphere_count; i++) {
+        vec3 s_pos = sphere_data[i * 2].xyz;
+        float s_radius = sphere_data[i * 2].w;
+        
+        vec3 oc = ray_origin - s_pos;
+        float b = 2.0 * dot(oc, ray_dir);
+        float c = dot(oc, oc) - s_radius * s_radius;
+        float disc = b * b - 4.0 * c;
+        
+        if (disc >= 0.0) {
+            float t = (-b - sqrt(disc)) * 0.5;
+            if (t < EPSILON) t = (-b + sqrt(disc)) * 0.5;
+            
+            if (t > EPSILON && t < closest_t) {
+                closest_t = t;
+                closest_sphere = i;
+                hit_point = ray_origin + ray_dir * t;
+                normal = normalize(hit_point - s_pos);
+            }
+        }
+    }
+    
+    vec3 color = background;
+    
+    if (closest_sphere >= 0) {
+        vec3 s_color = sphere_data[closest_sphere * 2 + 1].xyz;
+        color = vec3(0);
+        for (int i = 0; i < light_count; i++) {
+            vec3 l_pos = light_data[i * 2].xyz;
+            float l_intensity = light_data[i * 2 + 1].w;
+            
+            vec3 to_light = normalize(l_pos - hit_point);
+            float intensity = max(dot(normal, to_light), 0.0) * l_intensity;
+            color += s_color * intensity;
+        }
+    }
+    
+    imageStore(outTexture, pixelCoords, vec4(color, 1.0));
+}

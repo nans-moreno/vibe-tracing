@@ -1,0 +1,57 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\raytracer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\scene.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\camera.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\ui.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\graphics.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\raytracer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\scene.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\ui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\graphics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\Administrator\Desktop\laplateforme\IA\project\raytracer\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{FE4DE79D-EC65-31FD-AF47-141884990912}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{910EF1FC-0D78-3F28-BE83-90C9FFA2CB5C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

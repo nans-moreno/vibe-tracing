@@ -1,0 +1,10 @@
+^C:\USERS\ADMINISTRATOR\DESKTOP\LAPLATEFORME\IA\PROJECT\RAYTRACER\CMAKELISTS.TXT
+setlocal
+C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\BrechtSanders.WinLibs.POSIX.UCRT_Microsoft.Winget.Source_8wekyb3d8bbwe\mingw64\bin\cmake.exe -SC:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer -BC:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build --check-stamp-file C:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

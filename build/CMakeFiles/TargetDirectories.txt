@@ -1,0 +1,3 @@
+C:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build/CMakeFiles/vibe_tracing.dir
+C:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/Administrator/Desktop/laplateforme/IA/project/raytracer/build/CMakeFiles/ZERO_CHECK.dir
