@@ -1,0 +1,21 @@
+# Build system
+build/
+cmake_build_debug/
+cmake_build_release/
+*.o
+*.a
+
+# Output
+output.ppm
+output.png
+
+# IDE
+.vscode/
+.idea/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+
+# OS
+.DS_Store
+Thumbs.db
